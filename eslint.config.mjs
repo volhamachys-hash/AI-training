@@ -14,21 +14,10 @@ export default defineConfig([
       'playwright/no-wait-for-timeout': 'error',
       'playwright/no-focused-test': 'error',
       'playwright/no-skipped-test': 'error',
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'CallExpression[callee.property.name=/^(locator|getBy[A-Z]\\w*|\\$|\\$\\$)$/]',
-          message: 'Selectors live only in Page Objects (pages/). Add a locator or method there.',
-        },
-        {
-          selector: "CallExpression[callee.object.name='page'][callee.property.name='goto']",
-          message: 'Navigate through Page Object goto() methods, not page.goto() in tests.',
-        },
-      ],
     },
   },
   {
-    // Setup files verify login via Page Object waits, not expect().
+    // Setup files fail by throwing (see helpers/session.helper.ts), not via expect().
     files: ['tests/**/*.setup.ts'],
     rules: { 'playwright/expect-expect': 'off' },
   },

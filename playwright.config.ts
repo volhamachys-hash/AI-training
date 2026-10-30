@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { defineConfig, devices } from '@playwright/test';
-import { env, ADMIN_STORAGE_STATE, CUSTOMER_STORAGE_STATE } from './config/env';
+import { defineConfig } from '@playwright/test';
+import { env, SESSION_STORAGE_STATE } from './config/env';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -18,12 +18,11 @@ export default defineConfig({
   reporter: [['html'], ['json', { outputFile: 'test-results/results.json' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Host of the stand (from SESSION_URL): page paths (e.g. '/dk/account') live in Page Objects. */
+    /* Host of the stand (from SESSION_URL): endpoint paths (e.g. '/store/regions') live in API clients. */
     baseURL: env.baseUrl,
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    /* Collect trace (requests and responses) when retrying the failed test. */
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
   },
 
   projects: [
@@ -32,15 +31,10 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/,
     },
     {
-      name: 'chromium',
-      testIgnore: /[\\/]admin[\\/]/,
-      use: { ...devices['Desktop Chrome'], storageState: CUSTOMER_STORAGE_STATE },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'admin',
-      testMatch: /[\\/]admin[\\/].*\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'], storageState: ADMIN_STORAGE_STATE },
+      name: 'api',
+      testIgnore: /.*\.setup\.ts/,
+      /* The `request` fixture carries the stand cookie saved by the setup project. */
+      use: { storageState: SESSION_STORAGE_STATE },
       dependencies: ['setup'],
     },
   ],

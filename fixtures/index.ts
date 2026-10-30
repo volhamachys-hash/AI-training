@@ -1,42 +1,32 @@
-import { test as base, expect } from '@playwright/test';
-import { Customer } from '../data/customer';
-import { AuthHelper } from '../helpers/auth.helper';
-import { loadCustomer } from '../helpers/customer.helper';
-import { LoginPage } from '../pages/login/login.page';
-import { AccountOverviewPage } from '../pages/account/overview.page';
-import { AdminLoginPage } from '../pages/admin/admin-login.page';
-import { AdminOrdersPage } from '../pages/admin/admin-orders.page';
+import { test as base, expect as baseExpect } from '@playwright/test';
+import { AnySchema } from 'ajv';
+import { env } from '../config/env';
+import { validateSchema } from '../helpers/schema.helper';
+import { StoreRegionsClient } from '../api/store/regions.client';
 
-type AuthFixtures = {
-  authHelper: AuthHelper;
-  loginPage: LoginPage;
-  accountPage: AccountOverviewPage;
-  adminLoginPage: AdminLoginPage;
-  adminOrdersPage: AdminOrdersPage;
-  /** Customer registered by the setup project on your stand. */
-  customer: Customer;
+type ApiFixtures = {
+  /** Store API: Regions, with the publishable API key of your stand. */
+  storeRegions: StoreRegionsClient;
 };
 
-export const test = base.extend<AuthFixtures>({
-  authHelper: async ({ page }, use) => {
-    await use(new AuthHelper(page));
-  },
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page));
-  },
-  accountPage: async ({ page }, use) => {
-    await use(new AccountOverviewPage(page));
-  },
-  adminLoginPage: async ({ page }, use) => {
-    await use(new AdminLoginPage(page));
-  },
-  adminOrdersPage: async ({ page }, use) => {
-    await use(new AdminOrdersPage(page));
-  },
-  // eslint-disable-next-line no-empty-pattern
-  customer: async ({}, use) => {
-    await use(loadCustomer());
+export const test = base.extend<ApiFixtures>({
+  storeRegions: async ({ request }, use) => {
+    await use(new StoreRegionsClient(request, env.publishableApiKey));
   },
 });
 
-export { expect };
+export const expect = baseExpect.extend({
+  /** expect(body).toMatchSchema(schema): JSON Schema validation with the list of violations. */
+  toMatchSchema(received: unknown, schema: AnySchema) {
+    const errors = validateSchema(schema, received);
+    const pass = errors.length === 0;
+    return {
+      pass,
+      name: 'toMatchSchema',
+      message: () =>
+        pass
+          ? 'Expected the body not to match the schema, but it does.'
+          : `The body does not match the schema:\n  ${errors.join('\n  ')}`,
+    };
+  },
+});

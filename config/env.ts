@@ -7,11 +7,11 @@ function required(name: string): string {
 }
 
 export const env = {
-  /** Session link of your stand: opening it selects the stand via cookie. It is a secret. */
+  /** Session link of your stand: opening it sets the stand cookie. It is a secret. */
   get sessionUrl() {
     return required('SESSION_URL');
   },
-  /** Host of the stand, derived from the session link. Page paths live in Page Objects. */
+  /** Host of the stand, derived from the session link. Store and Admin API live on it. */
   get baseUrl() {
     const sessionUrl = this.sessionUrl;
     try {
@@ -20,14 +20,11 @@ export const env = {
       throw new Error('SESSION_URL is not a valid URL. Copy the full link from your task.');
     }
   },
-  /**
-   * Admin link of your stand from the access dialog (optional). Like the session link it selects
-   * the stand via cookie, so without it the admin is opened at /app after the session link.
-   */
-  get adminUrl() {
-    return process.env.ADMIN_URL || undefined;
+  /** Publishable API key of your stand: required by every Store API (/store/*) request. */
+  get publishableApiKey() {
+    return required('PUBLISHABLE_API_KEY');
   },
-  /** Medusa Admin (/app) credentials of your stand. */
+  /** Medusa Admin credentials of your stand. */
   get adminEmail() {
     return required('ADMIN_EMAIL');
   },
@@ -36,11 +33,5 @@ export const env = {
   },
 };
 
-/** Stand cookie only: no customer is logged in. */
+/** Stand cookie only: the request context of every API test starts from it. */
 export const SESSION_STORAGE_STATE = 'playwright/.auth/session.json';
-/** Stand cookie + logged-in Medusa admin. Session of the `admin` project. */
-export const ADMIN_STORAGE_STATE = 'playwright/.auth/admin.json';
-/** Stand cookie + logged-in customer. Default session for tests. */
-export const CUSTOMER_STORAGE_STATE = 'playwright/.auth/customer.json';
-/** Credentials of the customer registered by the setup project. */
-export const CUSTOMER_DATA_FILE = 'playwright/.auth/customer-data.json';
